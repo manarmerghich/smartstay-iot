@@ -1,27 +1,23 @@
 # SmartStay IoT
-SmartStay IoT - Smart Airbnb Management
 
 ## Présentation
-SmartStay IoT est un projet IoT de gestion intelligente d'appartements de location courte durée.
+SmartStay IoT est une application de gestion intelligente de plusieurs logements Airbnb situés dans différentes villes.
 
-## Objectifs
-- Afficher les appartements sur un tableau de bord.
-- Surveiller la température et l'état des équipements.
-- Simuler le contrôle de la porte, de la climatisation et des fenêtres.
-- Gérer les réservations et visualiser la consommation énergétique simulée.
+## Fonctionnalités
+- Gestion des logements et des réservations.
+- Contrôle intelligent des accès.
+- Gestion de la climatisation.
+- Automatisation de l'ouverture des fenêtres.
+- Suivi de la consommation électrique.
+- Tableau de bord centralisé.
+- Simulation des objets connectés (IoT).
 
-## Technologies prévues
-- Frontend : Next.js et TypeScript
-- Backend : Python et FastAPI
-- Base de données : PostgreSQL
-- Simulation IoT : capteurs et actionneurs virtuels
+## Organisation du projet
+- `frontend/` : interface utilisateur et tableau de bord.
+- `backend/` : API et logique métier.
+- `iot-simulation/` : simulation des appareils connectés.
+- `database/` : base de données et scripts.
+- `docs/` : documentation du projet.
 
 ## Équipe
-- Membre 1 : Frontend
-- Membre 2 : Backend et API
-- Membre 3 : Base de données
-- Membre 4 : Simulation IoT
-- Membre 5 : Intégration, tests et déploiement
-
-## Statut
-Projet en cours de développement dans le cadre du module IoT.
+Projet académique réalisé par une équipe de cinq étudiants.
