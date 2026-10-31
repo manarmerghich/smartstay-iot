@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "author": "IMANE ALLOUCH",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -191.7,
+      "left": 148.2,
+      "attrs": { "temperature": "80" }
+    },
+    { "type": "wokwi-pir-motion-sensor", "id": "pir1", "top": 13.6, "left": 357.42, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo1", "top": 228.4, "left": 336, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo2", "top": 391.6, "left": 307.2, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 505.2,
+      "left": 195.8,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "esp:3V3", "dht1:VCC", "red", [] ],
+    [ "esp:GND.1", "dht1:GND", "black", [] ],
+    [ "esp:15", "dht1:SDA", "green", [] ],
+    [ "esp:VIN", "pir1:VCC", "red", [] ],
+    [ "esp:GND.1", "pir1:GND", "black", [] ],
+    [ "esp:27", "pir1:OUT", "green", [] ],
+    [ "esp:VIN", "servo1:V+", "red", [] ],
+    [ "esp:GND.1", "servo1:GND", "black", [] ],
+    [ "esp:18", "servo1:PWM", "orange", [] ],
+    [ "esp:VIN", "servo2:V+", "red", [] ],
+    [ "esp:GND.1", "servo2:GND", "black", [] ],
+    [ "esp:19", "servo2:PWM", "orange", [] ],
+    [ "esp:23", "led1:A", "green", [] ],
+    [ "esp:GND.1", "led1:C", "black", [] ],
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+  ],
+  "dependencies": {}
+}
