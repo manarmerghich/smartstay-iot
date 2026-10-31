@@ -17,7 +17,7 @@ export const PERMISSIONS = {
   staff: ['window'],
 }
 
-export const OUTSIDE_TEMP = { 'Fès': 29, Rabat: 24, Tanger: 22 }
+export const OUTSIDE_TEMP = { 'Fès': 29, Rabat: 24, Tanger: 22, Marrakech: 33 }
 
 // 6 previous days of simulated consumption (kWh); today's value grows in real time
 export const initialApartments = [
@@ -42,6 +42,27 @@ export const initialApartments = [
     temperature: 22.8, humidity: 58, presence: false,
     energyHistory: [4.2, 4.9, 5.3, 4.6, 5.8, 5.1], energyToday: 2.7,
   },
+  {
+    id: 'apt-fes2', name: 'Batha Garden Flat', city: 'Fès', address: '8 Rue Batha (fictional)',
+    image: IMG('photo-1505691938895-1758d7feb511'), cleaning: false,
+    door: 'locked', window: 'closed', ac: { on: false, target: 24, mode: 'cool' },
+    temperature: 25.3, humidity: 44, presence: false,
+    energyHistory: [5.2, 4.8, 5.9, 6.4, 5.5, 5.0], energyToday: 1.9,
+  },
+  {
+    id: 'apt-tng2', name: 'Kasbah Terrace Loft', city: 'Tanger', address: '19 Rue de la Kasbah (fictional)',
+    image: IMG('photo-1484154218962-a197022b5858'), cleaning: false,
+    door: 'locked', window: 'closed', ac: { on: true, target: 23, mode: 'cool' },
+    temperature: 23.4, humidity: 61, presence: true,
+    energyHistory: [6.3, 6.9, 7.4, 6.1, 7.0, 6.6], energyToday: 3.4,
+  },
+  {
+    id: 'apt-mrk', name: 'Majorelle Garden Suite', city: 'Marrakech', address: '14 Rue Yves Saint Laurent (fictional)',
+    image: IMG('photo-1560185007-cde436f6a4d0'), cleaning: true,
+    door: 'locked', window: 'closed', ac: { on: false, target: 24, mode: 'cool' },
+    temperature: 29.8, humidity: 33, presence: true,
+    energyHistory: [11.4, 12.8, 13.5, 12.2, 14.1, 13.0], energyToday: 5.6,
+  },
 ]
 
 export function buildInitialReservations() {
@@ -53,6 +74,10 @@ export function buildInitialReservations() {
     { id: 'r4', apartmentId: 'apt-rab', guest: 'Booking #1024', start: d(2), end: d(6) },
     { id: 'r5', apartmentId: 'apt-tng', guest: 'Booking #1027', start: d(4), end: d(9) },
     { id: 'r6', apartmentId: 'apt-fes', guest: 'Booking #1030', start: d(6), end: d(10) },
+    { id: 'r7', apartmentId: 'apt-tng2', guest: 'Booking #1033', start: d(-3), end: d(1) },
+    { id: 'r8', apartmentId: 'apt-fes2', guest: 'Booking #1036', start: d(1), end: d(4) },
+    { id: 'r9', apartmentId: 'apt-mrk', guest: 'Booking #1012', start: d(-5), end: d(-1) },
+    { id: 'r10', apartmentId: 'apt-mrk', guest: 'Booking #1039', start: d(3), end: d(8) },
   ]
 }
 

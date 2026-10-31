@@ -86,7 +86,7 @@ export default function Dashboard({ apartments, reservations, onOpen }) {
             <h3>Today by apartment</h3>
             <SimBadge />
           </div>
-          <BarList items={apartments.map((a, i) => ({ label: `${a.city}`, value: round1(a.energyToday), color: COLORS[i % 4] }))} />
+          <BarList items={apartments.map((a, i) => ({ label: a.name, value: round1(a.energyToday), color: COLORS[i % COLORS.length] }))} />
           <div className="total-line"><span>Total spend</span><b>{totalToday} kWh</b></div>
         </div>
       </section>
