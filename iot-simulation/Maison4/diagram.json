@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "author": "IMANE ALLOUCH",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -38.4, "left": -43.16, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht4",
+      "top": -143.7,
+      "left": 167.4,
+      "attrs": { "temperature": "32", "humidity": "45" }
+    },
+    { "type": "wokwi-pir-motion-sensor", "id": "pir4", "top": -44, "left": 271.02, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servoDoor4", "top": 113.2, "left": 240, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servoWindow4", "top": 190, "left": 28.8, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led4",
+      "top": 274.8,
+      "left": 234.2,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "esp:3V3", "dht4:VCC", "red", [] ],
+    [ "esp:GND.1", "dht4:GND", "black", [] ],
+    [ "esp:15", "dht4:SDA", "green", [] ],
+    [ "esp:VIN", "pir4:VCC", "red", [] ],
+    [ "esp:GND.1", "pir4:GND", "black", [] ],
+    [ "esp:27", "pir4:OUT", "green", [] ],
+    [ "esp:VIN", "servoDoor4:V+", "red", [] ],
+    [ "esp:GND.1", "servoDoor4:GND", "black", [] ],
+    [ "esp:18", "servoDoor4:PWM", "orange", [] ],
+    [ "esp:VIN", "servoWindow4:V+", "red", [] ],
+    [ "esp:GND.1", "servoWindow4:GND", "black", [] ],
+    [ "esp:19", "servoWindow4:PWM", "orange", [] ],
+    [ "esp:23", "led4:A", "green", [] ],
+    [ "esp:GND.1", "led4:C", "black", [] ],
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+  ],
+  "dependencies": {}
+}
