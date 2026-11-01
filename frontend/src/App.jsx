@@ -1,122 +1,64 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
+import Sidebar from './components/Sidebar'
+import { NAV } from './data/nav'
+import Header from './components/Header'
+import RightPanel from './components/RightPanel'
+import Toast from './components/Toast'
+import Icon from './components/Icons'
+import Dashboard from './pages/Dashboard'
+import Apartments from './pages/Apartments'
+import Energy from './pages/Energy'
+import Reservations from './pages/Reservations'
+import Automation from './pages/Automation'
+import ActivityLog from './pages/ActivityLog'
+import { useSmartStay } from './hooks/useSmartStay'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+const SUBTITLES = {
+  dashboard: 'All your apartments at a glance',
+  apartments: 'Control devices and monitor sensors',
+  energy: 'Simulated electricity consumption',
+  reservations: 'Bookings that drive apartment status',
+  automation: 'Rules that act on your devices',
+  logs: 'Traceability of every command',
 }
 
-export default App
+export default function App() {
+  const store = useSmartStay()
+  const [page, setPage] = useState('dashboard')
+  const [selectedId, setSelectedId] = useState('apt-fes')
+  const [panelOpen, setPanelOpen] = useState(false)
+
+  const openApartment = (id) => { setSelectedId(id); setPage('apartments') }
+  const title = NAV.find((n) => n.id === page)?.label
+
+  return (
+    <div className="app">
+      <Sidebar page={page} onNavigate={setPage} />
+      <main className="main">
+        <Header title={title} subtitle={SUBTITLES[page]} user={store.user} users={store.users}
+          onUserChange={store.setUserId} onMenu={() => setPanelOpen(true)} />
+        {store.apiError && <div className="notice error"><Icon name="alert" size={16} /> {store.apiError}</div>}
+
+        {page === 'dashboard' && <Dashboard apartments={store.apartments} reservations={store.reservations} onOpen={openApartment} />}
+        {page === 'apartments' && (
+          <Apartments apartments={store.apartments} reservations={store.reservations} selectedId={selectedId}
+            onSelect={setSelectedId} user={store.user} command={store.command} busy={store.busy}
+            logs={store.logs} setCleaning={store.setCleaning} />
+        )}
+        {page === 'energy' && <Energy apartments={store.apartments} />}
+        {page === 'reservations' && (
+          <Reservations apartments={store.apartments} reservations={store.reservations}
+            onSave={store.saveReservation} onDelete={store.deleteReservation} notify={store.notify} />
+        )}
+        {page === 'automation' && <Automation rules={store.rules} onToggle={store.toggleRule} logs={store.logs} apartments={store.apartments} />}
+        {page === 'logs' && <ActivityLog logs={store.logs} apartments={store.apartments} />}
+      </main>
+
+      <RightPanel rules={store.rules} onToggleRule={store.toggleRule} users={store.users} currentUser={store.user}
+        logs={store.logs} apartments={store.apartments} open={panelOpen} onClose={() => setPanelOpen(false)}
+        onNavigate={(p) => { setPage(p); setPanelOpen(false) }} />
+      <Toast toast={store.toast} />
+    </div>
+  )
+}
