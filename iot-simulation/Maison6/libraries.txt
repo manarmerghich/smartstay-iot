@@ -5,3 +5,7 @@
 DHT sensor library
 
 ESP32Servo
+Adafruit Unified Sensor
+PubSubClient
+ArduinoJson
+Keypad
