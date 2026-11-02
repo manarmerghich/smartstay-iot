@@ -71,3 +71,13 @@ Réponse d'accès :
 - [ ] **Date et heure des mesures** : ajoutées par le serveur à la réception ?
 - [ ] **Règle de la fenêtre** : à définir (voir le PRD, section 6.3).
 - [ ] **Villes définitives** des six logements.
+
+## 6. Proposition : le serveur s'adapte à la simulation (à valider par Basma et Fatima)
+
+Le backend n'étant pas encore développé, les simulations restent comme elles sont et le serveur fait la traduction.
+
+- **Clim** : le serveur reçoit `{on}`, `{target}`, `{mode}` du dashboard, mémorise la cible et le mode dans `device_states`, et envoie à la simulation uniquement `{"device":"ac","value":"on"/"off"}`.
+- **État des équipements** : le serveur enregistre l'état commandé (porte, fenêtre, clim). La simulation n'envoie pas son état.
+- **Porte** : déverrouillage de 5 secondes, puis reverrouillage. Le dashboard affiche « verrouillée » après ce délai.
+- **Vocabulaire** : `unlocked` = `open`, `locked` = `close`.
+- **Date et heure** : ajoutées par le serveur à la réception de chaque mesure.
