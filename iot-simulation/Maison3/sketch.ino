@@ -5,19 +5,23 @@
 #include <DHT.h>
 #include <ESP32Servo.h>
 
-// ==================================================
+// =====================================
 // 1. CONFIGURATION WIFI
-// ==================================================
+// =====================================
 
 const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
 
-// ==================================================
+// =====================================
 // 2. CONFIGURATION MQTT
-// ==================================================
+// =====================================
 
 const char* MQTT_SERVER = "broker.emqx.io";
 const int MQTT_PORT = 1883;
+
+// =====================================
+// 3. TOPICS MQTT - MAISON 3
+// =====================================
 
 const char* TOPIC_TELEMETRY =
   "smartstay-manar/maison3/telemetry";
@@ -31,34 +35,30 @@ const char* TOPIC_ACCESS_REQUEST =
 const char* TOPIC_ACCESS_RESPONSE =
   "smartstay-manar/maison3/access/response";
 
-// ==================================================
-// 3. CONFIGURATION DES BROCHES
-// ==================================================
+// =====================================
+// 4. CONFIGURATION DES CAPTEURS
+// =====================================
 
 #define DHT_PIN 15
 #define DHT_TYPE DHT22
-
 #define PIR_PIN 27
-#define AC_LED_PIN 23
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+// =====================================
+// 5. CONFIGURATION DES ACTIONNEURS
+// =====================================
 
 #define SERVO_DOOR_PIN 18
 #define SERVO_WINDOW_PIN 19
-
-// ==================================================
-// 4. INITIALISATION DES COMPOSANTS
-// ==================================================
-
-DHT dht(DHT_PIN, DHT_TYPE);
+#define AC_LED_PIN 23
 
 Servo doorServo;
 Servo windowServo;
 
-WiFiClient espClient;
-PubSubClient mqtt(espClient);
-
-// ==================================================
-// 5. CONFIGURATION DU KEYPAD
-// ==================================================
+// =====================================
+// 6. CONFIGURATION DU KEYPAD
+// =====================================
 
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -81,100 +81,30 @@ Keypad keypad = Keypad(
   COLS
 );
 
-// ==================================================
-// 6. VARIABLES
-// ==================================================
-
 String accessCode = "";
 
-unsigned long lastTelemetry = 0;
-unsigned long doorOpenTime = 0;
+// =====================================
+// 7. CONFIGURATION DES DELAIS
+// =====================================
 
 const unsigned long TELEMETRY_INTERVAL = 5000;
 const unsigned long DOOR_OPEN_DURATION = 5000;
 
+unsigned long lastTelemetry = 0;
+unsigned long doorOpenTime = 0;
+
 bool doorIsOpen = false;
 
-// ==================================================
-// 7. ENVOI DE LA DEMANDE D'ACCES
-// ==================================================
+// =====================================
+// 8. CONNEXION WIFI ET MQTT
+// =====================================
 
-void sendAccessRequest(String code) {
-
-  JsonDocument doc;
-
-  doc["code"] = code;
-
-  char buffer[100];
-  serializeJson(doc, buffer);
-
-  mqtt.publish(TOPIC_ACCESS_REQUEST, buffer);
-
-  Serial.println("Demande d'acces envoyee au serveur.");
-  Serial.println(buffer);
-}
-
-// ==================================================
-// 8. ENVOI DES DONNEES DES CAPTEURS
-// ==================================================
-
-void sendTelemetry() {
-
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-
-  bool presence = digitalRead(PIR_PIN);
-
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Erreur lecture DHT22");
-    return;
-  }
-
-  JsonDocument doc;
-
-  doc["temperature"] = temperature;
-  doc["humidity"] = humidity;
-  doc["presence"] = presence;
-
-  char buffer[150];
-  serializeJson(doc, buffer);
-
-  mqtt.publish(TOPIC_TELEMETRY, buffer);
-
-  Serial.println("Mesures envoyees au serveur:");
-  Serial.println(buffer);
-}
-
-// ==================================================
-// 9. CONTROLE DE LA PORTE
-// ==================================================
-
-void openDoor() {
-
-  doorServo.write(90);
-
-  doorIsOpen = true;
-  doorOpenTime = millis();
-
-  Serial.println("Porte ouverte");
-}
-
-void closeDoor() {
-
-  doorServo.write(0);
-
-  doorIsOpen = false;
-
-  Serial.println("Porte fermee");
-}
-
-// ==================================================
-// 10. CONNEXION WIFI
-// ==================================================
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
 
 void connectWiFi() {
 
-  Serial.print("Connexion au Wi-Fi");
+  Serial.print("Connexion Wi-Fi...");
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -184,14 +114,91 @@ void connectWiFi() {
   }
 
   Serial.println();
-  Serial.println("Wi-Fi connecte");
-  Serial.print("Adresse IP: ");
+  Serial.println("Wi-Fi connecte !");
+  Serial.print("Adresse IP : ");
   Serial.println(WiFi.localIP());
 }
 
-// ==================================================
+// =====================================
+// 9. GESTION DE LA PORTE
+// =====================================
+
+void openDoor() {
+
+  doorServo.write(90);
+
+  doorIsOpen = true;
+  doorOpenTime = millis();
+
+  Serial.println("Porte ouverte.");
+}
+
+void closeDoor() {
+
+  doorServo.write(0);
+
+  doorIsOpen = false;
+
+  Serial.println("Porte fermee.");
+}
+
+// =====================================
+// 10. COMMUNICATION MQTT
+// =====================================
+
+void sendAccessRequest(String code) {
+
+  JsonDocument doc;
+
+  doc["code"] = code;
+
+  String payload;
+
+  serializeJson(doc, payload);
+
+  mqtt.publish(
+    TOPIC_ACCESS_REQUEST,
+    payload.c_str()
+  );
+
+  Serial.println("Demande envoyee au serveur.");
+  Serial.println(payload);
+}
+
+void sendTelemetry() {
+
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  bool presence = digitalRead(PIR_PIN);
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Erreur lecture DHT22.");
+    return;
+  }
+
+  JsonDocument doc;
+
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["presence"] = presence;
+
+  String payload;
+
+  serializeJson(doc, payload);
+
+  mqtt.publish(
+    TOPIC_TELEMETRY,
+    payload.c_str()
+  );
+
+  Serial.println("Mesures envoyees au serveur :");
+  Serial.println(payload);
+}
+
+// =====================================
 // 11. GESTION DU KEYPAD
-// ==================================================
+// =====================================
 
 void handleKeypad() {
 
@@ -199,16 +206,22 @@ void handleKeypad() {
 
   if (key) {
 
+    // Effacer le code
     if (key == '*') {
 
       accessCode = "";
-      Serial.println("Code efface");
 
+      Serial.println();
+      Serial.println("Code efface.");
     }
 
+    // Envoyer le code avec #
     else if (key == '#') {
 
       if (accessCode.length() > 0) {
+
+        Serial.println();
+        Serial.println("Envoi de la demande au serveur...");
 
         sendAccessRequest(accessCode);
 
@@ -216,25 +229,31 @@ void handleKeypad() {
 
       } else {
 
-        Serial.println("Veuillez saisir un code");
-
+        Serial.println("Veuillez saisir un code.");
       }
-
     }
 
+    // Saisie limitee a 10 chiffres
     else if (key >= '0' && key <= '9') {
 
-      accessCode += key;
+      if (accessCode.length() < 10) {
 
-      Serial.print("*");
+        accessCode += key;
 
+        Serial.print("*");
+
+      } else {
+
+        Serial.println();
+        Serial.println("Limite de 10 chiffres atteinte.");
+      }
     }
   }
 }
 
-// ==================================================
-// 12. RECEPTION DES MESSAGES MQTT
-// ==================================================
+// =====================================
+// 12. RECEPTION DES REPONSES ET COMMANDES
+// =====================================
 
 void mqttCallback(
   char* topic,
@@ -248,134 +267,158 @@ void mqttCallback(
     message += (char)payload[i];
   }
 
-  Serial.print("Message recu sur: ");
-  Serial.println(topic);
-
+  Serial.println();
+  Serial.print("Message recu : ");
   Serial.println(message);
 
-  JsonDocument doc;
+  // REPONSE A LA DEMANDE D'ACCES
 
-  DeserializationError error =
-    deserializeJson(doc, message);
+  if (String(topic) == TOPIC_ACCESS_RESPONSE) {
 
-  if (error) {
-    Serial.println("Erreur JSON");
-    return;
-  }
+    JsonDocument doc;
 
-  String receivedTopic = String(topic);
+    DeserializationError error =
+      deserializeJson(doc, message);
 
-  // ----------------------------------------------
-  // REPONSE D'AUTORISATION D'ACCES
-  // ----------------------------------------------
+    if (error) {
+      Serial.println("Erreur JSON - acces.");
+      return;
+    }
 
-  if (receivedTopic == TOPIC_ACCESS_RESPONSE) {
+    const char* result = doc["result"] | "";
 
-    String result = doc["result"] | "";
+    if (String(result) == "open") {
 
-    if (result == "open") {
-
-      Serial.println("Acces autorise par le serveur");
+      Serial.println("Acces autorise par le serveur.");
 
       openDoor();
 
-    }
+    } else {
 
-    else if (result == "denied") {
-
-      Serial.println("Acces refuse par le serveur");
+      Serial.println("Acces refuse par le serveur.");
 
       closeDoor();
-
     }
+
+    return;
   }
 
-  // ----------------------------------------------
-  // COMMANDES DES EQUIPEMENTS
-  // ----------------------------------------------
+  // COMMANDES DU SERVEUR
 
-  else if (receivedTopic == TOPIC_COMMAND) {
+  if (String(topic) == TOPIC_COMMAND) {
 
-    String device = doc["device"] | "";
-    String value = doc["value"] | "";
+    JsonDocument doc;
 
-    value.toLowerCase();
+    DeserializationError error =
+      deserializeJson(doc, message);
 
-    if (device == "window") {
+    if (error) {
+      Serial.println("Erreur JSON - commande.");
+      return;
+    }
 
-      if (value == "open") {
+    const char* device = doc["device"] | "";
+    const char* value = doc["value"] | "";
 
-        windowServo.write(90);
-        Serial.println("Fenetre ouverte");
+    String action = value;
+    action.toLowerCase();
+
+    // COMMANDE PORTE : OPEN / CLOSE
+
+    if (String(device) == "door") {
+
+      if (action == "open") {
+
+        openDoor();
 
       }
 
-      else if (value == "close") {
+      else if (action == "close") {
 
-        windowServo.write(0);
-        Serial.println("Fenetre fermee");
+        closeDoor();
 
       }
     }
 
-    else if (device == "ac") {
+    // COMMANDE FENETRE
 
-      if (value == "on") {
+    else if (String(device) == "window") {
 
-        digitalWrite(AC_LED_PIN, HIGH);
-        Serial.println("Climatisation activee");
+      if (action == "open") {
 
+        windowServo.write(90);
+
+        Serial.println("Fenetre ouverte.");
       }
 
-      else if (value == "off") {
+      else if (action == "close") {
+
+        windowServo.write(0);
+
+        Serial.println("Fenetre fermee.");
+      }
+    }
+
+    // COMMANDE CLIMATISATION
+
+    else if (String(device) == "ac") {
+
+      if (action == "on") {
+
+        digitalWrite(AC_LED_PIN, HIGH);
+
+        Serial.println("Climatisation activee.");
+      }
+
+      else if (action == "off") {
 
         digitalWrite(AC_LED_PIN, LOW);
-        Serial.println("Climatisation arretee");
 
+        Serial.println("Climatisation arretee.");
       }
     }
   }
 }
 
-// ==================================================
+// =====================================
 // 13. CONNEXION MQTT
-// ==================================================
+// =====================================
 
 void connectMQTT() {
 
   while (!mqtt.connected()) {
 
-    Serial.print("Connexion au MQTT...");
+    Serial.print("Connexion au broker MQTT...");
 
-    String clientId =
-      "SmartStay-Maison3-" +
-      String((uint32_t)ESP.getEfuseMac(), HEX);
+    String clientId = "SmartStay-Maison3-";
+
+    clientId += String(
+      (uint32_t)ESP.getEfuseMac(),
+      HEX
+    );
 
     if (mqtt.connect(clientId.c_str())) {
 
-      Serial.println("MQTT connecte");
+      Serial.println("MQTT connecte !");
 
       mqtt.subscribe(TOPIC_COMMAND);
       mqtt.subscribe(TOPIC_ACCESS_RESPONSE);
 
-      Serial.println("Topics MQTT souscrits");
+      Serial.println("Topics MQTT souscrits.");
 
-    }
+    } else {
 
-    else {
-
-      Serial.print("Echec MQTT, code: ");
+      Serial.print("Echec MQTT. Code : ");
       Serial.println(mqtt.state());
 
-      delay(3000);
-
+      delay(2000);
     }
   }
 }
 
-// ==================================================
+// =====================================
 // 14. SETUP
-// ==================================================
+// =====================================
 
 void setup() {
 
@@ -383,50 +426,59 @@ void setup() {
 
   Serial.println();
   Serial.println("================================");
-  Serial.println("SMARTSTAY - MAISON 3");
+  Serial.println("     SMARTSTAY - MAISON 3");
   Serial.println("================================");
 
+  // Capteur PIR
   pinMode(PIR_PIN, INPUT);
-  pinMode(AC_LED_PIN, OUTPUT);
 
+  // LED climatisation
+  pinMode(AC_LED_PIN, OUTPUT);
   digitalWrite(AC_LED_PIN, LOW);
 
+  // Capteur DHT22
   dht.begin();
 
+  // Servomoteurs
   doorServo.attach(SERVO_DOOR_PIN);
   windowServo.attach(SERVO_WINDOW_PIN);
 
   closeDoor();
   windowServo.write(0);
 
+  // Connexion Wi-Fi
   connectWiFi();
 
+  // Connexion MQTT
   mqtt.setServer(MQTT_SERVER, MQTT_PORT);
   mqtt.setCallback(mqttCallback);
 
-  connectMQTT();
+  Serial.println("Systeme Maison 3 initialise.");
 }
 
-// ==================================================
+// =====================================
 // 15. LOOP
-// ==================================================
+// =====================================
 
 void loop() {
 
+  // Reconnexion Wi-Fi
   if (WiFi.status() != WL_CONNECTED) {
     connectWiFi();
   }
 
+  // Reconnexion MQTT
   if (!mqtt.connected()) {
     connectMQTT();
   }
 
+  // Reception des messages MQTT
   mqtt.loop();
 
+  // Gestion du clavier
   handleKeypad();
 
   // Envoi periodique des mesures
-
   if (millis() - lastTelemetry >= TELEMETRY_INTERVAL) {
 
     lastTelemetry = millis();
@@ -435,11 +487,11 @@ void loop() {
   }
 
   // Fermeture automatique apres 5 secondes
-
-  if (doorIsOpen &&
-      millis() - doorOpenTime >= DOOR_OPEN_DURATION) {
+  if (
+    doorIsOpen &&
+    millis() - doorOpenTime >= DOOR_OPEN_DURATION
+  ) {
 
     closeDoor();
   }
 }
-
