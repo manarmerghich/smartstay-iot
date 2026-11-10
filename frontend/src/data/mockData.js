@@ -19,45 +19,46 @@ export const PERMISSIONS = {
 
 export const OUTSIDE_TEMP = { 'Fès': 29, Rabat: 24, Tanger: 22, Marrakech: 33 }
 
+// `house` = N in the MQTT prefix smartstay-manar/maisonN/... (see docs/contrat.md)
 // 6 previous days of simulated consumption (kWh); today's value grows in real time
 export const initialApartments = [
   {
-    id: 'apt-fes', name: 'Riad Atlas Suite', city: 'Fès', address: '12 Rue Talaa Kebira (fictional)',
+    id: 'apt-fes', house: 1, name: 'Riad Atlas Suite', city: 'Fès', address: '12 Rue Talaa Kebira (fictional)',
     image: IMG('photo-1502672260266-1c1ef2d93688'), cleaning: false,
     door: 'locked', window: 'open', ac: { on: true, target: 24, mode: 'cool' },
     temperature: 26.4, humidity: 41, presence: true,
     energyHistory: [9.8, 10.4, 8.9, 11.2, 12.1, 10.7], energyToday: 6.2,
   },
   {
-    id: 'apt-rab', name: 'Oudaya Sea Apartment', city: 'Rabat', address: '27 Boulevard Al Marsa (fictional)',
+    id: 'apt-rab', house: 2, name: 'Oudaya Sea Apartment', city: 'Rabat', address: '27 Boulevard Al Marsa (fictional)',
     image: IMG('photo-1522708323590-d24dbb6b0267'), cleaning: true,
     door: 'locked', window: 'closed', ac: { on: false, target: 22, mode: 'cool' },
     temperature: 24.2, humidity: 52, presence: true,
     energyHistory: [7.5, 8.1, 7.7, 9.3, 8.4, 7.9], energyToday: 3.1,
   },
   {
-    id: 'apt-tng', name: 'Marina Bay Studio', city: 'Tanger', address: '3 Avenue Mohammed VI (fictional)',
+    id: 'apt-tng', house: 3, name: 'Marina Bay Studio', city: 'Tanger', address: '3 Avenue Mohammed VI (fictional)',
     image: IMG('photo-1493809842364-78817add7ffb'), cleaning: false,
     door: 'locked', window: 'closed', ac: { on: true, target: 22, mode: 'cool' },
     temperature: 22.8, humidity: 58, presence: false,
     energyHistory: [4.2, 4.9, 5.3, 4.6, 5.8, 5.1], energyToday: 2.7,
   },
   {
-    id: 'apt-fes2', name: 'Batha Garden Flat', city: 'Fès', address: '8 Rue Batha (fictional)',
+    id: 'apt-fes2', house: 4, name: 'Batha Garden Flat', city: 'Fès', address: '8 Rue Batha (fictional)',
     image: IMG('photo-1505691938895-1758d7feb511'), cleaning: false,
     door: 'locked', window: 'closed', ac: { on: false, target: 24, mode: 'cool' },
     temperature: 25.3, humidity: 44, presence: false,
     energyHistory: [5.2, 4.8, 5.9, 6.4, 5.5, 5.0], energyToday: 1.9,
   },
   {
-    id: 'apt-tng2', name: 'Kasbah Terrace Loft', city: 'Tanger', address: '19 Rue de la Kasbah (fictional)',
+    id: 'apt-tng2', house: 5, name: 'Kasbah Terrace Loft', city: 'Tanger', address: '19 Rue de la Kasbah (fictional)',
     image: IMG('photo-1484154218962-a197022b5858'), cleaning: false,
     door: 'locked', window: 'closed', ac: { on: true, target: 23, mode: 'cool' },
     temperature: 23.4, humidity: 61, presence: true,
     energyHistory: [6.3, 6.9, 7.4, 6.1, 7.0, 6.6], energyToday: 3.4,
   },
   {
-    id: 'apt-mrk', name: 'Majorelle Garden Suite', city: 'Marrakech', address: '14 Rue Yves Saint Laurent (fictional)',
+    id: 'apt-mrk', house: 6, name: 'Majorelle Garden Suite', city: 'Marrakech', address: '14 Rue Yves Saint Laurent (fictional)',
     image: IMG('photo-1560185007-cde436f6a4d0'), cleaning: true,
     door: 'locked', window: 'closed', ac: { on: false, target: 24, mode: 'cool' },
     temperature: 29.8, humidity: 33, presence: true,
