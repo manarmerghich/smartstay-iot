@@ -52,8 +52,17 @@ function applyRules(state, now) {
 
 function reducer(state, action) {
   switch (action.type) {
+    // Real backend: merge latest server data (telemetry + device states) into the 6 houses
     case 'hydrate':
-      return { ...state, apartments: action.apartments }
+      return {
+        ...state,
+        apartments: state.apartments.map((a) => {
+          const srv = action.apartments.find((x) => x.house === a.house)
+          if (!srv) return a
+          const defined = Object.fromEntries(Object.entries(srv).filter(([k, v]) => v !== undefined && k !== 'ac' && k !== 'house'))
+          return { ...a, ...defined, ac: { ...a.ac, ...(srv.ac ?? {}) } }
+        }),
+      }
 
     case 'device': {
       const { apartmentId, device, value, user, now, text } = action
@@ -65,9 +74,9 @@ function reducer(state, action) {
       })
       const withLog = pushLog({ ...state, apartments }, {
         time: now, user: user.name, role: user.role, apartmentId,
-        command: text, result: 'success', source: 'user',
+        command: text, result: 'success', source: action.source ?? 'user',
       })
-      return applyRules(withLog, now)
+      return USE_MOCK ? applyRules(withLog, now) : withLog
     }
 
     case 'rejected':
@@ -146,16 +155,21 @@ export function useSmartStay() {
     timer.current = setTimeout(() => setToast(null), 3500)
   }, [])
 
-  // Real backend: load apartments once. Failure → visible error message (NFR "Reliability").
+  // Real backend: poll the server every 3 s. On failure show a clear message (NFR "Reliability").
   useEffect(() => {
     if (USE_MOCK) return
-    fetchApartments()
-      .then((apartments) => dispatch({ type: 'hydrate', apartments }))
-      .catch(() => setApiError('The API is currently unavailable. Showing last known data.'))
+    const load = () =>
+      fetchApartments()
+        .then((apartments) => { dispatch({ type: 'hydrate', apartments }); setApiError(null) })
+        .catch(() => setApiError('The API is currently unavailable. Showing last known data.'))
+    load()
+    const id = setInterval(load, 3000)
+    return () => clearInterval(id)
   }, [])
 
-  // Simulated sensor stream (replace with polling/WebSocket on the real backend)
+  // Demo mode only: simulated sensor stream (with a real backend the server sends telemetry)
   useEffect(() => {
+    if (!USE_MOCK) return
     const id = setInterval(() => {
       dispatch({ type: 'tick', now: Date.now(), noise: Array.from({ length: 8 }, () => Math.random() - 0.5) })
     }, 3000)
@@ -166,18 +180,28 @@ export function useSmartStay() {
     async (apartmentId, device, value) => {
       const text = describe(device, value)
       setBusy(true)
-      const res = await sendCommand({ apartmentId, device, value, user })
+      const house = state.apartments.find((a) => a.id === apartmentId)?.house
+      const res = await sendCommand({ apartmentId, house, device, value, user })
       setBusy(false)
       if (res.ok) {
         dispatch({ type: 'device', apartmentId, device, value, user, now: Date.now(), text })
         notify(`${text} — done`)
+        // The simulated house closes its door by itself ~5 s after an opening (contract).
+        if (USE_MOCK && device === 'door' && value === 'unlocked') {
+          setTimeout(() => {
+            dispatch({
+              type: 'device', apartmentId, device: 'door', value: 'locked', now: Date.now(),
+              user: { name: 'Simulation', role: 'system' }, text: 'Door closed automatically (after 5 s)', source: 'automation',
+            })
+          }, 5000)
+        }
       } else {
         dispatch({ type: 'rejected', apartmentId, user, now: Date.now(), text })
         notify(res.error, 'error')
       }
       return res
     },
-    [user, notify],
+    [user, notify, state.apartments],
   )
 
   return {
