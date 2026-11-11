@@ -7,6 +7,8 @@
 -- Utilisation : Neon Console > ton projet > SQL Editor > coller > Run
 -- Attention : le début du script SUPPRIME les tables existantes.
 -- Note : Neon tourne en UTC, donc CURRENT_DATE = date UTC.
+-- Sécurité : l'adresse de connexion Neon ne va JAMAIS dans GitHub.
+--            Elle se met dans backend/.env (ignoré par Git), partagée en privé.
 -- =====================================================
 
 -- ---------- 0. NETTOYAGE ----------
@@ -32,9 +34,13 @@ CREATE TABLE users (
     id           VARCHAR(30) PRIMARY KEY,                 -- 'u1'
     name         VARCHAR(80) NOT NULL,
     label        VARCHAR(80) NOT NULL,
+    email        VARCHAR(120) NOT NULL,                   -- identifiant de connexion
     role         VARCHAR(10) NOT NULL CHECK (role IN ('owner','manager','staff')),
-    avatar_color VARCHAR(9)
+    avatar_color VARCHAR(9),
+    password_hash VARCHAR(255) NULL                       -- hash (bcrypt/argon2) calculé par le backend, JAMAIS le mot de passe en clair
 );
+-- Email unique sans tenir compte des majuscules (Owner@x.com = owner@x.com)
+CREATE UNIQUE INDEX uq_users_email ON users (lower(email));
 
 -- Droits par rôle (PERMISSIONS du frontend)
 CREATE TABLE role_permissions (
@@ -132,9 +138,10 @@ CREATE TABLE access_codes (
     apartment_id   VARCHAR(30) NOT NULL REFERENCES apartments(id) ON DELETE CASCADE,
     reservation_id VARCHAR(30) NULL REFERENCES reservations(id) ON DELETE SET NULL,
     code_hash      CHAR(64) NOT NULL,                     -- SHA-256 en hexadécimal, jamais le code en clair
-    valid_from     DATE NOT NULL,
-    valid_to       DATE NOT NULL,
-    active         BOOLEAN NOT NULL DEFAULT TRUE
+    valid_from     TIMESTAMPTZ NOT NULL,                  -- date ET heure de début de validité
+    valid_to       TIMESTAMPTZ NOT NULL,                  -- date ET heure de fin de validité
+    active         BOOLEAN NOT NULL DEFAULT TRUE,
+    CHECK (valid_to > valid_from)
 );
 CREATE INDEX idx_code ON access_codes(apartment_id, code_hash);
 
@@ -186,10 +193,14 @@ GROUP BY a.id, a.name, c.name;
 INSERT INTO cities (name, outside_temp) VALUES
 ('Fès',29),('Rabat',24),('Tanger',22),('Marrakech',33);
 
-INSERT INTO users (id, name, label, role, avatar_color) VALUES
-('u1','Owner','Owner','owner','#8fbf9f'),
-('u2','Manager','Manager','manager','#c9a27e'),
-('u3','Cleaning staff','Cleaning staff','staff','#9a9ab8');
+-- Emails fictifs de démo (domaine .example) : à remplacer par les vrais
+INSERT INTO users (id, name, label, email, role, avatar_color) VALUES
+('u1','Owner','Owner','owner@smartstay.example','owner','#8fbf9f'),
+('u2','Manager','Manager','manager@smartstay.example','manager','#c9a27e'),
+('u3','Cleaning staff','Cleaning staff','staff@smartstay.example','staff','#9a9ab8');
+-- password_hash reste NULL ici : le hash doit être calculé par le backend (bcrypt/argon2).
+-- Exemple pour définir le mot de passe du propriétaire depuis le backend :
+--   UPDATE users SET password_hash = '<hash calculé par le backend>' WHERE id = 'u1';
 
 INSERT INTO role_permissions (role, device) VALUES
 ('owner','door'),('owner','ac'),('owner','window'),
@@ -201,22 +212,22 @@ INSERT INTO apartments
  ac_on, ac_target, ac_mode, temperature, humidity, presence, mqtt_topic_prefix) VALUES
 ('apt-fes',  (SELECT id FROM cities WHERE name='Fès'),       'Riad Atlas Suite', '12 Rue Talaa Kebira (fictional)',
  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=70',
- FALSE,'locked','open',  TRUE, 24,'cool',26.4,41,TRUE,'smartstay-manar/maison1'),  -- À ADAPTER : quel appartement = Maison1 ?
+ FALSE,'locked','open',  TRUE, 24,'cool',26.4,41,TRUE,'smartstay-manar/maison1'),
 ('apt-rab',  (SELECT id FROM cities WHERE name='Rabat'),     'Oudaya Sea Apartment', '27 Boulevard Al Marsa (fictional)',
  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
- TRUE, 'locked','closed',FALSE,22,'cool',24.2,52,TRUE,NULL),
+ TRUE, 'locked','closed',FALSE,22,'cool',24.2,52,TRUE,'smartstay-manar/maison2'),
 ('apt-tng',  (SELECT id FROM cities WHERE name='Tanger'),    'Marina Bay Studio', '3 Avenue Mohammed VI (fictional)',
  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=70',
- FALSE,'locked','closed',TRUE, 22,'cool',22.8,58,FALSE,NULL),
+ FALSE,'locked','closed',TRUE, 22,'cool',22.8,58,FALSE,'smartstay-manar/maison3'),
 ('apt-fes2', (SELECT id FROM cities WHERE name='Fès'),       'Batha Garden Flat', '8 Rue Batha (fictional)',
  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=70',
- FALSE,'locked','closed',FALSE,24,'cool',25.3,44,FALSE,NULL),
+ FALSE,'locked','closed',FALSE,24,'cool',25.3,44,FALSE,'smartstay-manar/maison4'),
 ('apt-tng2', (SELECT id FROM cities WHERE name='Tanger'),    'Kasbah Terrace Loft', '19 Rue de la Kasbah (fictional)',
  'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=70',
- FALSE,'locked','closed',TRUE, 23,'cool',23.4,61,TRUE,NULL),
+ FALSE,'locked','closed',TRUE, 23,'cool',23.4,61,TRUE,'smartstay-manar/maison5'),
 ('apt-mrk',  (SELECT id FROM cities WHERE name='Marrakech'), 'Majorelle Garden Suite', '14 Rue Yves Saint Laurent (fictional)',
  'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=900&q=70',
- TRUE, 'locked','closed',FALSE,24,'cool',29.8,33,TRUE,NULL);
+ TRUE, 'locked','closed',FALSE,24,'cool',29.8,33,TRUE,'smartstay-manar/maison6');
 
 -- Énergie : 6 jours passés + aujourd'hui (7e valeur), dates relatives à CURRENT_DATE
 INSERT INTO energy_daily (apartment_id, day_date, kwh)
@@ -255,9 +266,13 @@ INSERT INTO automation_rules (id, name, description, enabled, threshold, conditi
  jsonb_build_array('Temperature ≥ 28 °C','Presence detected','Air conditioner is OFF'),
  'Turn the air conditioner ON at its target temperature');
 
--- Code keypad de démo pour la réservation r1 (Riad Atlas Suite) : 1234
+-- !!! DÉMO UNIQUEMENT !!!
+-- Code keypad de test (1234) pour la réservation r1 (Riad Atlas Suite).
+-- À ne PAS garder en production : supprime-le avec
+--   DELETE FROM access_codes WHERE reservation_id = 'r1';
 INSERT INTO access_codes (apartment_id, reservation_id, code_hash, valid_from, valid_to) VALUES
-('apt-fes','r1', encode(sha256(convert_to('1234','UTF8')),'hex'), CURRENT_DATE - 2, CURRENT_DATE + 3);
+('apt-fes','r1', encode(sha256(convert_to('1234','UTF8')),'hex'),
+ now() - interval '2 days', now() + interval '3 days');
 
 -- ---------- 4. REQUÊTES UTILES POUR LE BACKEND ----------
 -- GET /apartments (état courant) :
@@ -265,6 +280,8 @@ INSERT INTO access_codes (apartment_id, reservation_id, code_hash, valid_from, v
 -- Historique énergie d'un appartement (6 jours + aujourd'hui) :
 --   SELECT day_date, kwh FROM energy_daily
 --   WHERE apartment_id = 'apt-fes' AND day_date >= CURRENT_DATE - 6 ORDER BY day_date;
+-- Connexion : récupérer l'utilisateur et son hash à comparer côté backend :
+--   SELECT id, name, label, role, password_hash FROM users WHERE lower(email) = lower('owner@smartstay.example');
 -- Droit d'un utilisateur sur un équipement (1 ligne = autorisé, sinon 403) :
 --   SELECT 1 FROM role_permissions rp JOIN users u ON u.role = rp.role
 --   WHERE u.id = 'u3' AND rp.device = 'door';
@@ -272,7 +289,7 @@ INSERT INTO access_codes (apartment_id, reservation_id, code_hash, valid_from, v
 --   SELECT 1 FROM access_codes
 --   WHERE apartment_id = 'apt-fes'
 --     AND code_hash = encode(sha256(convert_to('1234','UTF8')),'hex')
---     AND active AND CURRENT_DATE BETWEEN valid_from AND valid_to;
+--     AND active AND now() BETWEEN valid_from AND valid_to;
 -- Statut dérivé des réservations : SELECT * FROM v_apartment_status;
 -- KPI du dashboard :              SELECT * FROM v_dashboard_kpis;
 -- Test du chevauchement (doit échouer avec "no_overlap") :
