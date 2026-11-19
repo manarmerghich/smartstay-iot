@@ -2,12 +2,15 @@ const W = 600
 const H = 220
 const PAD = { l: 38, r: 14, t: 14, b: 28 }
 
-export function LineChart({ labels, series, unit = 'kWh' }) {
+export function LineChart({ labels, series, unit = 'kWh', zoom = false }) {
   const all = series.flatMap((s) => s.values)
-  const max = Math.max(1, Math.ceil(Math.max(...all) / 2) * 2)
+  // zoom: the axis follows the data range (used for temperatures) instead of starting at 0
+  const lo = zoom ? Math.floor(Math.min(...all) - 1) : 0
+  const hi = zoom ? Math.ceil(Math.max(...all) + 1) : Math.max(1, Math.ceil(Math.max(...all) / 2) * 2)
+  const span = Math.max(1, hi - lo)
   const x = (i) => PAD.l + (i * (W - PAD.l - PAD.r)) / Math.max(1, labels.length - 1)
-  const y = (v) => H - PAD.b - (v / max) * (H - PAD.t - PAD.b)
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(max * f * 10) / 10)
+  const y = (v) => H - PAD.b - ((v - lo) / span) * (H - PAD.t - PAD.b)
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round((lo + span * f) * 10) / 10)
 
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Consumption chart in ${unit}`}>
@@ -18,18 +21,20 @@ export function LineChart({ labels, series, unit = 'kWh' }) {
         </g>
       ))}
       {labels.map((l, i) => (
-        <text key={l + i} x={x(i)} y={H - 8} textAnchor="middle" className="axis">{l}</text>
+        i % Math.ceil(labels.length / 8) === 0 && (
+          <text key={l + i} x={x(i)} y={H - 8} textAnchor="middle" className="axis">{l}</text>
+        )
       ))}
       {series.map((s) => {
         const pts = s.values.map((v, i) => `${x(i)},${y(v)}`).join(' ')
         return (
           <g key={s.label}>
             {s.area && (
-              <polygon points={`${x(0)},${y(0)} ${pts} ${x(s.values.length - 1)},${y(0)}`} fill={s.color} opacity="0.12" />
+              <polygon points={`${x(0)},${y(lo)} ${pts} ${x(s.values.length - 1)},${y(lo)}`} fill={s.color} opacity="0.12" />
             )}
             <polyline points={pts} fill="none" stroke={s.color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
             {s.values.map((v, i) => (
-              <circle key={i} cx={x(i)} cy={y(v)} r={i === s.values.length - 1 ? 4.5 : 2.6} fill={s.color}>
+              <circle key={i} cx={x(i)} cy={y(v)} r={i === s.values.length - 1 ? 4.5 : s.values.length > 12 ? 0 : 2.6} fill={s.color}>
                 <title>{`${s.label} — ${labels[i]}: ${v} ${unit}`}</title>
               </circle>
             ))}

@@ -1,36 +1,54 @@
-import { PERMISSIONS } from '../data/mockData'
+import { useEffect, useState } from 'react'
 import Icon from '../components/Icons'
 import SafeImage from '../components/SafeImage'
 import StatusPill from '../components/StatusPill'
 import SimBadge from '../components/SimBadge'
 import Toggle from '../components/Toggle'
-import ThermostatDial from '../components/ThermostatDial'
+import AcGraphic from '../components/AcGraphic'
+import WindowGraphic from '../components/WindowGraphic'
+import KeypadPanel from '../components/KeypadPanel'
 import { LineChart } from '../components/Charts'
-import { apartmentStatus, fmtDate, fmtDateTime, fmtTime, nextReservation, nightsBetween, todayISO, weekLabels, round1 } from '../utils/helpers'
+import { DOOR_IMAGE } from '../data/mockData'
+import { fetchMeasurements, USE_MOCK } from '../services/api'
+import {
+  currentReservation, describeAction, describeDetail, fmtDate, fmtDateTime, fmtHM, nextReservation, nightsBetween,
+  round1, weekLabels,
+} from '../utils/helpers'
+import { useI18n } from '../i18n/useI18n'
+import { useNow } from '../hooks/useNow'
 
-const MODES = [
-  { id: 'cool', label: 'Cool', icon: 'wind' },
-  { id: 'auto', label: 'Auto', icon: 'automation' },
-  { id: 'dry', label: 'Dry', icon: 'drop' },
-]
-
-export default function Apartments({ apartments, reservations, selectedId, onSelect, user, command, busy, logs, setCleaning }) {
+export default function Apartments({ apartments, reservations, logs, selectedId, onSelect, command, busy, setCleaning, keypad }) {
+  const { t, city, lang } = useI18n()
   const apt = apartments.find((a) => a.id === selectedId) ?? apartments[0]
-  const today = todayISO()
-  const status = apartmentStatus(apt, reservations, today)
-  const allowed = PERMISSIONS[user.role] ?? []
-  const can = (d) => allowed.includes(d)
-  const next = nextReservation(apt.id, reservations, today)
-  const aptLogs = logs.filter((l) => l.apartmentId === apt.id).slice(0, 6)
+  const nowMs = useNow(1000)
+  const cur = currentReservation(apt.id, reservations, nowMs)
+  const next = nextReservation(apt.id, reservations, nowMs)
+  const aptLogs = logs.filter((l) => l.apartment_id === apt.id && l.actor_type !== 'keypad' && l.action !== 'verify_code').slice(0, 6)
+  const open = apt.door === 'unlocked'
 
-  const labels = weekLabels()
+  // temperature history: real = GET /apartments/{id}/measurements, demo = local buffer
+  const [history, setHistory] = useState([])
+  useEffect(() => {
+    if (USE_MOCK) return
+    let stop = false
+    const load = () => fetchMeasurements(apt.id, 40)
+      .then((rows) => { if (!stop) setHistory([...rows].reverse()) })
+      .catch(() => {})
+    load()
+    const id = setInterval(load, 10000)
+    return () => { stop = true; clearInterval(id) }
+  }, [apt.id])
+  const temps = USE_MOCK ? (apt.tempHistory || []).map((v) => ({ v, l: '' })) : history.map((m) => ({ v: m.temperature, l: fmtHM(m.recorded_at, lang) }))
+
   const values = [...apt.energyHistory, round1(apt.energyToday)]
+  const ageS = apt.lastUpdate ? Math.max(0, Math.floor((nowMs - new Date(apt.lastUpdate).getTime()) / 1000)) : null
 
-  // presence vs reservation — two DIFFERENT pieces of information
-  let presenceNote = 'Reservation and sensor are consistent.'
-  let presenceTone = 'ok'
-  if (status.key === 'occupied' && !apt.presence) { presenceNote = 'Reserved, but no one is detected inside.'; presenceTone = 'warn' }
-  if (status.key !== 'occupied' && apt.presence) { presenceNote = status.key === 'cleaning' ? 'Presence detected — probably the cleaning staff.' : 'Presence detected without an active reservation!'; presenceTone = status.key === 'cleaning' ? 'ok' : 'warn' }
+  let presenceNote = t('pres.ok'); let presenceWarn = false
+  if (apt.status === 'occupied' && !apt.presence) { presenceNote = t('pres.noOne'); presenceWarn = true }
+  if (apt.status !== 'occupied' && apt.presence) {
+    presenceNote = apt.status === 'cleaning' ? t('pres.cleaning') : t('pres.unexpected')
+    presenceWarn = apt.status !== 'cleaning'
+  }
 
   return (
     <div className="page">
@@ -46,111 +64,113 @@ export default function Apartments({ apartments, reservations, selectedId, onSel
         <SafeImage src={apt.image} alt={apt.name} className="hero-img" />
         <div className="hero-overlay" />
         <div className="hero-content">
-          <StatusPill status={status.key}>{status.label}</StatusPill>
+          <StatusPill status={apt.status} />
           <h2>{apt.name}</h2>
-          <p><Icon name="pin" size={15} /> {apt.address}, {apt.city}</p>
+          <p><Icon name="pin" size={15} /> {apt.address}, {city(apt.city)}</p>
         </div>
       </section>
 
-      {!allowed.length || allowed.length < 3 ? (
-        <div className="notice"><Icon name="shield" size={16} /> Signed in as <b>{user.label}</b>: limited access ({allowed.join(', ') || 'read-only'} commands only). Other commands will be rejected by the server.</div>
-      ) : null}
-
       <div className="detail-grid">
-        {/* DOOR */}
-        <section className="card device">
-          <div className="card-head"><h3><Icon name="door" size={18} /> Front door</h3></div>
-          <div className={`big-state ${apt.door === 'locked' ? 'ok' : 'warn'}`}>
-            <Icon name={apt.door === 'locked' ? 'lock' : 'unlock'} size={44} strokeWidth={1.4} />
-            <b>{apt.door === 'locked' ? 'Locked' : 'Unlocked'}</b>
+        {/* FRONT DOOR */}
+        <section className="card device photo-card">
+          <div className="device-photo" style={{ backgroundImage: `url(${DOOR_IMAGE})` }}>
+            <span className={`state-chip ${open ? 'warn' : 'ok'}`}><Icon name={open ? 'unlock' : 'lock'} size={14} /> {t(open ? 'door.open' : 'door.closed')}</span>
           </div>
-          <button className={`btn ${apt.door === 'locked' ? 'btn-primary' : 'btn-outline'}`} disabled={busy}
-            onClick={() => command(apt.id, 'door', apt.door === 'locked' ? 'unlocked' : 'locked')}>
-            <Icon name={apt.door === 'locked' ? 'unlock' : 'lock'} size={16} /> {apt.door === 'locked' ? 'Unlock door' : 'Lock door'}
+          <div className="card-head"><h3><Icon name="door" size={18} /> {t('door.title')}</h3></div>
+          <button className={`btn ${open ? 'btn-outline' : 'btn-primary'}`} disabled={busy}
+            onClick={() => command(apt.id, 'door', open ? 'locked' : 'unlocked')}>
+            <Icon name={open ? 'lock' : 'unlock'} size={16} /> {t(open ? 'door.close' : 'door.openBtn')}
           </button>
-          {!can('door') && <small className="muted">Your role cannot control the door.</small>}
+          <small className="muted">{t('door.auto')}</small>
         </section>
 
-        {/* AC */}
-        <section className="card device ac-card">
+        {/* AIR CONDITIONER */}
+        <section className="card device">
           <div className="card-head">
-            <h3><Icon name="wind" size={18} /> Air conditioner</h3>
-            <Toggle checked={apt.ac.on} disabled={busy} label="Air conditioner power" onChange={(v) => command(apt.id, 'ac', { on: v })} />
+            <h3><Icon name="wind" size={18} /> {t('ac.title')}</h3>
+            <Toggle checked={apt.ac.on} disabled={busy} label={t('ac.power')} onChange={(v) => command(apt.id, 'ac', { on: v })} />
           </div>
-          <ThermostatDial target={apt.ac.target} current={apt.temperature} on={apt.ac.on} disabled={busy}
-            onChange={(t) => command(apt.id, 'ac', { target: t })} />
-          <div className="modes">
-            {MODES.map((m) => (
-              <button key={m.id} disabled={busy || !apt.ac.on} className={`mode ${apt.ac.mode === m.id ? 'active' : ''}`}
-                onClick={() => command(apt.id, 'ac', { mode: m.id })} aria-label={`Mode ${m.label}`}>
-                <Icon name={m.icon} size={16} /> {m.label}
-              </button>
-            ))}
-          </div>
+          <div className="graphic-box"><AcGraphic on={apt.ac.on} /></div>
+          <span className={`state-chip ${apt.ac.on ? 'ok' : ''}`}>{t(apt.ac.on ? 'ac.activated' : 'ac.deactivated')}</span>
+          <small className="muted"><i className={`led ${apt.ac.on ? 'on' : ''}`} /> {t('ac.led')}</small>
         </section>
 
-        {/* WINDOW */}
+        {/* AUTOMATED WINDOW */}
         <section className="card device">
-          <div className="card-head"><h3><Icon name="window" size={18} /> Automated window</h3></div>
-          <div className={`big-state ${apt.window === 'closed' ? 'ok' : 'info'}`}>
-            <Icon name="window" size={44} strokeWidth={1.4} />
-            <b>{apt.window === 'open' ? 'Open' : 'Closed'}</b>
-          </div>
+          <div className="card-head"><h3><Icon name="window" size={18} /> {t('window.title')}</h3></div>
+          <div className="graphic-box"><WindowGraphic open={apt.window === 'open'} /></div>
+          <span className={`state-chip ${apt.window === 'open' ? 'warn' : 'ok'}`}>{t(apt.window === 'open' ? 'window.open' : 'window.closed')}</span>
           <button className="btn btn-outline" disabled={busy} onClick={() => command(apt.id, 'window', apt.window === 'open' ? 'closed' : 'open')}>
-            {apt.window === 'open' ? 'Close window' : 'Open window'}
+            {t(apt.window === 'open' ? 'window.close' : 'window.openBtn')}
           </button>
-          {apt.ac.on && apt.window === 'open' && <small className="warn-text">A/C is running with the window open — the “Save energy” rule will close it.</small>}
+          <small className="muted">{t('window.manual')}</small>
+          {apt.ac.on && apt.window === 'open' && <small className="warn-text">{t('window.warn')}</small>}
         </section>
 
         {/* SENSORS */}
         <section className="card">
-          <div className="card-head"><h3>Live sensors</h3><SimBadge /></div>
+          <div className="card-head"><h3>{t('sensors.title')}</h3><SimBadge /></div>
           <div className="sensor-list">
-            <div><Icon name="thermo" /><span>Temperature</span><b>{apt.temperature} °C</b></div>
-            <div><Icon name="drop" /><span>Humidity</span><b>{apt.humidity} %</b></div>
-            <div><Icon name="user" /><span>Presence sensor</span><b>{apt.presence ? 'Detected' : 'Nobody'}</b></div>
+            <div><Icon name="thermo" /><span>{t('m.temperature')} <small>DHT22</small></span><b dir="ltr">{apt.temperature} °C</b></div>
+            <div><Icon name="drop" /><span>{t('m.humidity')} <small>DHT22</small></span><b dir="ltr">{apt.humidity} %</b></div>
+            <div><Icon name="user" /><span>{t('sensors.presence')} <small>PIR</small></span><b>{t(apt.presence ? 'sensors.detected' : 'sensors.nobody')}</b></div>
           </div>
-          <small className="muted">Last measurement: {apt.lastUpdate ? fmtTime(apt.lastUpdate) : 'waiting for the first reading…'}</small>
+          <div className="refresh-line">
+            <i className="pulse" />
+            <span>{ageS === null ? t('sensors.waiting') : t('sensors.updated', { n: ageS })}</span>
+            <small>{t('sensors.refresh')}</small>
+          </div>
         </section>
 
-        {/* RESERVATION */}
+        {/* ACCESS CONTROL */}
+        <section className="card span-2">
+          <div className="card-head"><h3><Icon name="key" size={18} /> {t('keypad.title')}</h3></div>
+          <KeypadPanel key={apt.id} aptId={apt.id} logs={logs} interactive onSubmit={keypad} />
+        </section>
+
+        {/* RESERVATION + ENERGY */}
         <section className="card">
-          <div className="card-head"><h3>Reservation vs presence</h3></div>
+          <div className="card-head"><h3>{t('res.vsPresence')}</h3></div>
           <div className="two-cols">
             <div className="mini-box">
-              <small>Reservation status</small>
-              <StatusPill status={status.key}>{status.label}</StatusPill>
-              {status.reservation && <p>{status.reservation.guest}<br /><span className="muted">{fmtDate(status.reservation.start)} → {fmtDate(status.reservation.end)} · {nightsBetween(status.reservation.start, status.reservation.end)} nights</span></p>}
-              {!status.reservation && next && <p className="muted">Next: {next.guest}<br />{fmtDate(next.start)} → {fmtDate(next.end)}</p>}
+              <small>{t('res.status')}</small>
+              <StatusPill status={apt.status} />
+              {cur && <p>{cur.reference}<br /><span className="muted">{fmtDate(cur.check_in, lang)} → {fmtDate(cur.check_out, lang)} · {t('res.nights', { n: nightsBetween(cur.check_in, cur.check_out) })}</span></p>}
+              {!cur && next && <p className="muted">{t('res.next')}: {next.reference}<br />{fmtDate(next.check_in, lang)} → {fmtDate(next.check_out, lang)}</p>}
             </div>
             <div className="mini-box">
-              <small>Sensor presence</small>
-              <span className={`pill ${apt.presence ? 'pill-occupied' : 'pill-available'}`}>{apt.presence ? 'Presence detected' : 'No presence'}</span>
-              <p className={presenceTone === 'warn' ? 'warn-text' : 'muted'}>{presenceNote}</p>
+              <small>{t('sensors.presence')}</small>
+              <span className={`pill ${apt.presence ? 'pill-occupied' : 'pill-available'}`}>{t(apt.presence ? 'sensors.detected' : 'sensors.nobody')}</span>
+              <p className={presenceWarn ? 'warn-text' : 'muted'}>{presenceNote}</p>
             </div>
           </div>
-          <button className="btn btn-ghost" onClick={() => setCleaning(apt.id, !apt.cleaning)}>
-            <Icon name="broom" size={16} /> {apt.cleaning ? 'Mark cleaning as done' : 'Mark as “in cleaning”'}
+          <button className="btn btn-ghost" onClick={() => setCleaning(apt.id, apt.status !== 'cleaning')}>
+            <Icon name="broom" size={16} /> {t(apt.status === 'cleaning' ? 'clean.done' : 'clean.start')}
           </button>
         </section>
 
-        {/* ENERGY */}
-        <section className="card">
-          <div className="card-head"><h3>Energy — 7 days</h3><SimBadge /></div>
-          <div className="energy-today"><b>{apt.energyToday.toFixed(2)}</b><span>kWh today</span></div>
-          <LineChart labels={labels} series={[{ label: apt.name, values, color: '#d49a82', area: true }]} />
+        <section className="card span-2">
+          <div className="card-head"><h3>{t('en.apt7')}</h3><SimBadge /></div>
+          <div className="energy-today"><b>{apt.energyToday.toFixed(2)}</b><span>{t('m.kwhToday')}</span></div>
+          <LineChart labels={weekLabels(lang)} series={[{ label: apt.name, values, color: '#c0394f', area: true }]} />
         </section>
 
-        {/* LOGS */}
+        {temps.length > 1 && (
+          <section className="card span-all">
+            <div className="card-head"><h3>{t('hist.title')}</h3><SimBadge /></div>
+            <LineChart unit="°C" zoom labels={temps.map((x) => x.l)} series={[{ label: t('m.temperature'), values: temps.map((x) => x.v), color: '#3fae82', area: true }]} />
+          </section>
+        )}
+
         <section className="card span-all">
-          <div className="card-head"><h3>Latest commands for this apartment</h3></div>
-          {aptLogs.length === 0 ? <p className="muted">No commands yet.</p> : (
+          <div className="card-head"><h3>{t('log.aptTitle')}</h3></div>
+          {aptLogs.length === 0 ? <p className="muted">{t('log.none')}</p> : (
             <ul className="log-list">
               {aptLogs.map((l) => (
                 <li key={l.id}>
-                  <span className={`badge ${l.result === 'success' ? 'b-ok' : 'b-err'}`}>{l.result === 'success' ? 'Success' : 'Rejected'}</span>
-                  <b>{l.command}</b>
-                  <small>{l.user} · {fmtDateTime(l.time)}</small>
+                  <span className={`badge ${l.result === 'accepted' ? 'b-ok' : 'b-err'}`}>{t(l.result === 'accepted' ? 'res.ok' : 'res.refused')}</span>
+                  <b>{describeAction(l.action, t)}{describeDetail(l.detail, t) && l.result !== 'accepted' ? ` — ${describeDetail(l.detail, t)}` : ''}</b>
+                  <small>{l.actor_type === 'automation' ? t('who.automation') : t('role.owner')} · {fmtDateTime(l.ts, lang)}</small>
                 </li>
               ))}
             </ul>
