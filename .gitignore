@@ -9,3 +9,6 @@ backend/.venv/
 # Python
 __pycache__/
 *.pyc
+
+*.db
+backend/schema_dump.txt
