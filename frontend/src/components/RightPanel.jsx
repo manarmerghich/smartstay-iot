@@ -1,61 +1,54 @@
 import Icon from './Icons'
 import Toggle from './Toggle'
-import { fmtTime } from '../utils/helpers'
+import Skyline from './Skyline'
+import { useI18n } from '../i18n/useI18n'
+import { describeAction, fmtTime } from '../utils/helpers'
 
-export default function RightPanel({ rules, onToggleRule, users, currentUser, logs, apartments, open, onClose, onNavigate }) {
+export default function RightPanel({ rules, onToggleRule, logs, apartments, open, onClose, onNavigate }) {
+  const { t, lang } = useI18n()
   const name = (id) => apartments.find((a) => a.id === id)?.name ?? id
+  const ruleName = (r) => t(`rule.${r.id}.name`) === `rule.${r.id}.name` ? r.name : t(`rule.${r.id}.name`)
   return (
     <>
       {open && <div className="backdrop" onClick={onClose} />}
-      <aside className={`right-panel ${open ? 'open' : ''}`} aria-label="Automations, team and recent activity">
+      <aside className={`right-panel ${open ? 'open' : ''}`} aria-label={t('panel.label')}>
         <section className="rp-section">
           <div className="rp-head">
-            <h2>Automation</h2>
-            <button className="icon-btn light" onClick={() => onNavigate('automation')} aria-label="Manage automation rules">
+            <h2>{t('nav.automation')}</h2>
+            <button className="icon-btn light" onClick={() => onNavigate('automation')} aria-label={t('panel.manageRules')}>
               <Icon name="plus" size={18} />
             </button>
           </div>
           {rules.map((r) => (
             <div className="rule-mini" key={r.id}>
               <div>
-                <b>{r.name}</b>
-                <small>{r.conditions.join(' + ')} → {r.action}</small>
+                <b>{ruleName(r)}</b>
+                <small>{t(`rule.${r.id}.short`) === `rule.${r.id}.short` ? r.description : t(`rule.${r.id}.short`)}</small>
               </div>
-              <Toggle checked={r.enabled} onChange={() => onToggleRule(r.id)} label={`Enable rule ${r.name}`} />
+              <Toggle checked={r.enabled} onChange={() => onToggleRule(r.id)} label={ruleName(r)} />
             </div>
           ))}
         </section>
 
         <section className="rp-section">
-          <div className="rp-head"><h2>Team & roles</h2></div>
-          <div className="team">
-            {users.map((u) => (
-              <div key={u.id} className={`member ${u.id === currentUser.id ? 'me' : ''}`}>
-                <span className="avatar big" style={{ background: u.avatar }}><Icon name="user" size={20} /></span>
-                <b>{u.label}</b>
-              </div>
-            ))}
-          </div>
+            <div className="rp-head">
+              <h2>{t('panel.recent')}</h2>
+              <button className="link-btn" onClick={() => onNavigate('logs')}>{t('panel.seeAll')}</button>
+            </div>
+            {logs.length === 0 && <p className="muted">{t('panel.noCommands')}</p>}
+            <ul className="mini-log">
+              {logs.slice(0, 5).map((l) => (
+                <li key={l.id} className={l.result === 'refused' ? 'rejected' : ''}>
+                  <span className="dot" />
+                  <div>
+                    <b>{describeAction(l.action, t)}</b>
+                    <small>{name(l.apartment_id)} · {fmtTime(l.ts, lang)}</small>
+                  </div>
+                </li>
+              ))}
+            </ul>
         </section>
-
-        <section className="rp-section">
-          <div className="rp-head">
-            <h2>Recent commands</h2>
-            <button className="link-btn" onClick={() => onNavigate('logs')}>See all</button>
-          </div>
-          {logs.length === 0 && <p className="muted">No command sent yet. Control a device to see it here.</p>}
-          <ul className="mini-log">
-            {logs.slice(0, 5).map((l) => (
-              <li key={l.id} className={l.result === 'rejected' ? 'rejected' : ''}>
-                <span className="dot" />
-                <div>
-                  <b>{l.command}</b>
-                  <small>{name(l.apartmentId)} · {l.user} · {fmtTime(l.time)}</small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <Skyline className="panel-skyline" />
       </aside>
     </>
   )

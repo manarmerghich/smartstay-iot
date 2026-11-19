@@ -1,8 +1,8 @@
 export const NAV = [
-  { id: 'dashboard', label: 'Overview', icon: 'home' },
-  { id: 'apartments', label: 'Apartments', icon: 'building' },
-  { id: 'energy', label: 'Energy', icon: 'bolt' },
-  { id: 'reservations', label: 'Reservations', icon: 'calendar' },
-  { id: 'automation', label: 'Automation', icon: 'automation' },
-  { id: 'logs', label: 'Activity log', icon: 'history' },
+  { id: 'dashboard', key: 'nav.overview', icon: 'home' },
+  { id: 'apartments', key: 'nav.apartments', icon: 'building' },
+  { id: 'energy', key: 'nav.energy', icon: 'bolt' },
+  { id: 'reservations', key: 'nav.reservations', icon: 'calendar' },
+  { id: 'automation', key: 'nav.automation', icon: 'automation' },
+  { id: 'logs', key: 'nav.logs', icon: 'history' },
 ]

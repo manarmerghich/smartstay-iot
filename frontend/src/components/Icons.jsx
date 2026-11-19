@@ -28,6 +28,11 @@ const P = {
   broom: <path d="M14 3l-4 8M8 11l-4 9h6l4-9zM7 16h4" />,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  logo: <><path d="M5 21V11a7 7 0 0114 0v10M3 21h18" /><path d="M12 9l1.2 2.3 2.3.7-1.8 1.6.5 2.4L12 14.8 9.8 16l.5-2.4L8.5 12l2.3-.7z" /></>,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" /></>,
+  logout: <path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />,
+  key: <><circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M16 7l3 3M14 9l2 2" /></>,
+  copy: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3" /></>,
 }
 
 export default function Icon({ name, size = 20, className = '', strokeWidth = 1.7 }) {
