@@ -1,47 +1,51 @@
 import Icon from '../components/Icons'
 import Toggle from '../components/Toggle'
+import { RULE_INFO } from '../data/mockData'
+import { useI18n } from '../i18n/useI18n'
 import { fmtDateTime } from '../utils/helpers'
 
-export default function Automation({ rules, onToggle, logs, apartments }) {
+export default function Automation({ rules, onToggle, apartments }) {
+  const { t, lang } = useI18n()
   const name = (id) => apartments.find((a) => a.id === id)?.name
+  const tr = (key, fallback) => (t(key) === key ? fallback : t(key))
   return (
     <div className="page">
-      <p className="muted">Rules run automatically on every sensor update. Each trigger is written to the activity log.</p>
+      <p className="muted">{t('auto.intro')}</p>
       <div className="rules">
         {rules.map((r) => {
-          const hits = logs.filter((l) => l.ruleId === r.id)
+          const info = RULE_INFO[r.id]
           return (
             <section className={`card rule ${r.enabled ? '' : 'rule-off'}`} key={r.id}>
               <div className="card-head">
-                <h3><Icon name="automation" size={18} /> {r.name}</h3>
-                <Toggle checked={r.enabled} onChange={() => onToggle(r.id)} label={`Enable rule ${r.name}`} />
+                <h3><Icon name="automation" size={18} /> {tr(`rule.${r.id}.name`, r.name)}</h3>
+                <Toggle checked={r.enabled} onChange={() => onToggle(r.id)} label={r.name} />
               </div>
-              <p className="muted">{r.description}</p>
-              <div className="rule-flow">
-                <div className="flow-col">
-                  <small>IF (all true)</small>
-                  {r.conditions.map((c) => <span key={c} className="flow-chip">{c}</span>)}
+              <p className="muted">{tr(`rule.${r.id}.desc`, r.description)}</p>
+              {info && (
+                <div className="rule-flow">
+                  <div className="flow-col">
+                    <small>{t('auto.if')}</small>
+                    {info.conditions.map((c) => <span key={c} className="flow-chip">{t(c)}</span>)}
+                  </div>
+                  <Icon name="chevron" className="flow-arrow" />
+                  <div className="flow-col">
+                    <small>{t('auto.then')}</small>
+                    <span className="flow-chip accent">{t(info.action)}</span>
+                  </div>
                 </div>
-                <Icon name="chevron" className="flow-arrow" />
-                <div className="flow-col">
-                  <small>THEN</small>
-                  <span className="flow-chip accent">{r.action}</span>
-                </div>
-              </div>
+              )}
+              {r.id === 'save-energy' && !r.enabled && <small className="warn-text">{t('auto.offDefault')}</small>}
               <div className="rule-hits">
-                <b>{hits.length}</b> trigger{hits.length === 1 ? '' : 's'} this session
-                {hits[0] && <small> · last: {name(hits[0].apartmentId)} at {fmtDateTime(hits[0].time)}</small>}
+                <b>{r.triggers}</b> {t('auto.triggers')}
+                {r.last_trigger && <small> · {t('auto.last')}: {name(r.last_trigger.apartment_id)} · {fmtDateTime(r.last_trigger.ts, lang)}</small>}
               </div>
             </section>
           )
         })}
       </div>
       <section className="card">
-        <h3>How to demo a rule</h3>
-        <p className="muted">
-          Open the <b>Riad Atlas Suite</b> (Fès): the A/C is on. Re-open its window — the “Save energy” rule closes it again
-          within a second and logs the action as <i>Automation</i>.
-        </p>
+        <h3>{t('auto.demoTitle')}</h3>
+        <p className="muted">{t('auto.demoText')}</p>
       </section>
     </div>
   )

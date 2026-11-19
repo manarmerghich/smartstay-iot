@@ -1,9 +1,11 @@
 import Icon from './Icons'
+import { useI18n } from '../i18n/useI18n'
 
-export default function SimBadge({ text = 'Simulated data' }) {
+export default function SimBadge({ text }) {
+  const { t } = useI18n()
   return (
-    <span className="sim-badge" title="All measurements are simulated — no real equipment is connected.">
-      <Icon name="info" size={13} /> {text}
+    <span className="sim-badge" title={t('sim.title')}>
+      <Icon name="info" size={13} /> {text ?? t('sim.badge')}
     </span>
   )
 }
