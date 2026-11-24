@@ -17,7 +17,7 @@ export default function WindowGraphic({ open }) {
         </linearGradient>
       </defs>
       {/* outer arch frame (zellige-like double line) */}
-      <path d="M28 212 V92 a72 72 0 0 1 144 0 V212 z" fill="none" stroke="#c9a45c" strokeWidth="2" opacity="0.8" />
+      <path d="M28 212 V92 a72 72 0 0 1 144 0 V212 z" fill="none" stroke="#d8aa62" strokeWidth="2" opacity="0.8" />
       <path d={arch} fill="url(#wg-sky)" />
       <g clipPath="url(#wg-arch)">
         {/* night view behind the window: minaret + houses */}
@@ -31,16 +31,16 @@ export default function WindowGraphic({ open }) {
         </g>
         {/* sashes */}
         <g className="sash" style={{ transformOrigin: '36px 110px', transform: open ? 'scaleX(0.16)' : 'scaleX(1)' }}>
-          <rect x="36" y="20" width="64" height="190" fill="rgba(20,16,16,0.82)" stroke="#c9a45c" strokeWidth="1.5" />
-          <g stroke="#c9a45c" strokeWidth="0.8" opacity="0.55" clipPath="url(#wg-arch)">{lattice(36, 100)}</g>
+          <rect x="36" y="20" width="64" height="190" fill="rgba(20,16,16,0.82)" stroke="#d8aa62" strokeWidth="1.5" />
+          <g stroke="#d8aa62" strokeWidth="0.8" opacity="0.55" clipPath="url(#wg-arch)">{lattice(36, 100)}</g>
         </g>
         <g className="sash" style={{ transformOrigin: '164px 110px', transform: open ? 'scaleX(0.16)' : 'scaleX(1)' }}>
-          <rect x="100" y="20" width="64" height="190" fill="rgba(20,16,16,0.82)" stroke="#c9a45c" strokeWidth="1.5" />
-          <g stroke="#c9a45c" strokeWidth="0.8" opacity="0.55" clipPath="url(#wg-arch)">{lattice(100, 164)}</g>
+          <rect x="100" y="20" width="64" height="190" fill="rgba(20,16,16,0.82)" stroke="#d8aa62" strokeWidth="1.5" />
+          <g stroke="#d8aa62" strokeWidth="0.8" opacity="0.55" clipPath="url(#wg-arch)">{lattice(100, 164)}</g>
         </g>
       </g>
       {/* sill + small motor */}
-      <rect x="24" y="206" width="152" height="8" rx="3" fill="#2a2023" stroke="#c9a45c" strokeWidth="1" />
+      <rect x="24" y="206" width="152" height="8" rx="3" fill="#2a2023" stroke="#d8aa62" strokeWidth="1" />
       <circle cx="100" cy="14" r="7" fill="#161618" stroke="var(--accent)" strokeWidth="1.5" />
       <path d="M96 14h8M100 10v8" stroke="var(--accent)" strokeWidth="1.3" />
     </svg>

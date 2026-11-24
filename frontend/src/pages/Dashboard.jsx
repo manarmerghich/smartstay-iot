@@ -38,7 +38,6 @@ export default function Dashboard({ apartments, alerts, energy, onOpen }) {
           </div>
         </div>
       </section>
-      <div className="zellige-strip" aria-hidden="true" />
 
       <section className="kpis">
         <div className="kpi"><span className="kpi-icon"><Icon name="building" /></span><div><b>{apartments.length}</b><small>{t('kpi.apartments')}</small></div></div>
@@ -69,7 +68,7 @@ export default function Dashboard({ apartments, alerts, energy, onOpen }) {
       <section className="grid-2">
         <div className="card">
           <div className="card-head"><h3>{t('dash.total7')}</h3><SimBadge /></div>
-          <LineChart labels={weekLabels(lang)} series={[{ label: t('dash.all'), values: totals, color: '#3fae82', area: true }]} />
+          <LineChart labels={weekLabels(lang)} series={[{ label: t('dash.all'), values: totals, color: '#d8aa62', area: true }]} />
         </div>
         <div className="card burgundy">
           <div className="card-head"><h3>{t('dash.today')}</h3><SimBadge /></div>

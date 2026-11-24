@@ -65,7 +65,7 @@ export const sum = (arr) => arr.reduce((a, b) => a + b, 0)
 export const round1 = (n) => Math.round(n * 10) / 10
 export const round2 = (n) => Math.round(n * 100) / 100
 
-export const COLORS = ['#3fae82', '#c0394f', '#d9b36a', '#6fb3c8', '#a7a7cf', '#d98fb0']
+export const COLORS = ['#d8aa62', '#c0495a', '#9cc7a9', '#8fa8c8', '#e6cfa2', '#c98a6a']
 
 export function weekLabels(lang = 'en') {
   const t = new Date()

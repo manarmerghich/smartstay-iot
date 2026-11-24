@@ -1,6 +1,5 @@
 import Icon from './Icons'
 import Toggle from './Toggle'
-import Skyline from './Skyline'
 import { useI18n } from '../i18n/useI18n'
 import { describeAction, fmtTime } from '../utils/helpers'
 
@@ -48,7 +47,7 @@ export default function RightPanel({ rules, onToggleRule, logs, apartments, open
               ))}
             </ul>
         </section>
-        <Skyline className="panel-skyline" />
+        <div className="zellige-band" aria-hidden="true" />
       </aside>
     </>
   )

@@ -15,7 +15,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.failed) return this.props.children
     return (
-      <div className="login">
+      <div className="login login-single">
         <div className="login-card glass">
           <h1>SmartStay</h1>
           <p className="muted">Something went wrong while displaying the dashboard. · وقع شي مشكل فـ العرض.</p>

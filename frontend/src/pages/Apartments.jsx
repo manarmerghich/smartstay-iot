@@ -152,13 +152,13 @@ export default function Apartments({ apartments, reservations, logs, selectedId,
         <section className="card span-2">
           <div className="card-head"><h3>{t('en.apt7')}</h3><SimBadge /></div>
           <div className="energy-today"><b>{apt.energyToday.toFixed(2)}</b><span>{t('m.kwhToday')}</span></div>
-          <LineChart labels={weekLabels(lang)} series={[{ label: apt.name, values, color: '#c0394f', area: true }]} />
+          <LineChart labels={weekLabels(lang)} series={[{ label: apt.name, values, color: '#d8aa62', area: true }]} />
         </section>
 
         {temps.length > 1 && (
           <section className="card span-all">
             <div className="card-head"><h3>{t('hist.title')}</h3><SimBadge /></div>
-            <LineChart unit="°C" zoom labels={temps.map((x) => x.l)} series={[{ label: t('m.temperature'), values: temps.map((x) => x.v), color: '#3fae82', area: true }]} />
+            <LineChart unit="°C" zoom labels={temps.map((x) => x.l)} series={[{ label: t('m.temperature'), values: temps.map((x) => x.v), color: '#9cc7a9', area: true }]} />
           </section>
         )}
 

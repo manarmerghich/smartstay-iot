@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Icon from '../components/Icons'
 import LangToggle from '../components/LangToggle'
-import Skyline from '../components/Skyline'
 import SimBadge from '../components/SimBadge'
 import { OWNER_EMAIL } from '../data/mockData'
 import { USE_MOCK } from '../services/api'
@@ -23,36 +22,45 @@ export default function Login({ onSignIn, onDemo }) {
 
   return (
     <div className="login">
-      <div className="login-top"><LangToggle /></div>
-      <div className="login-card glass">
-        <div className="arch-logo"><Icon name="logo" size={34} strokeWidth={1.6} /></div>
-        <h1>SmartStay</h1>
-        <span className="greet">Marhba bik · مرحبا بيك</span>
-        <p className="muted">{t('login.subtitle')}</p>
-
-        {USE_MOCK ? (
-          <>
-            <SimBadge text={t('sim.demo')} />
-            <button className="btn btn-primary wide" onClick={onDemo}><Icon name="shield" size={18} /> {t('login.owner')}</button>
-          </>
-        ) : (
-          <form onSubmit={submit} className="login-form">
-            <label>{t('login.email')}
-              <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </label>
-            <label>{t('login.password')}
-              <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </label>
-            {error && <p className="warn-text" role="alert">{error}</p>}
-            <button className="btn btn-primary" disabled={busy}>{busy ? t('login.wait') : t('login.submit')}</button>
-            <div className="demo-chips">
-              <small>{t('login.demo')}</small>
-              <button type="button" className="chip-btn" onClick={() => { setEmail(OWNER_EMAIL); setPassword('demo1234') }}>{t('role.owner')}</button>
-            </div>
-          </form>
-        )}
+      <div className="login-photo" style={{ backgroundImage: 'url(/images/login-photo.jpg)' }}>
+        <div className="login-photo-shade" />
+        <div className="login-brand">
+          <span className="brand-mark"><Icon name="logo" size={26} strokeWidth={1.6} /></span>
+          <h2>SmartStay</h2>
+          <span className="greet">Marhba bik · مرحبا بيك</span>
+        </div>
       </div>
-      <Skyline className="login-skyline" />
+
+      <div className="login-panel">
+        <div className="login-top"><LangToggle /></div>
+        <div className="login-card">
+          <h1>{t('login.submit')}</h1>
+          <p className="muted">{t('login.subtitle')}</p>
+
+          {USE_MOCK ? (
+            <>
+              <SimBadge text={t('sim.demo')} />
+              <button className="btn btn-primary wide" onClick={onDemo}><Icon name="shield" size={18} /> {t('login.owner')}</button>
+            </>
+          ) : (
+            <form onSubmit={submit} className="login-form">
+              <label>{t('login.email')}
+                <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </label>
+              <label>{t('login.password')}
+                <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </label>
+              {error && <p className="warn-text" role="alert">{error}</p>}
+              <button className="btn btn-primary wide" disabled={busy}>{busy ? t('login.wait') : t('login.submit')}</button>
+              <div className="demo-chips">
+                <small>{t('login.demo')}</small>
+                <button type="button" className="chip-btn" onClick={() => { setEmail(OWNER_EMAIL); setPassword('demo1234') }}>{t('role.owner')}</button>
+              </div>
+            </form>
+          )}
+        </div>
+        <div className="zellige-band" aria-hidden="true" />
+      </div>
     </div>
   )
 }

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" width="132" height="132">
+<defs>
+  <linearGradient id="gd" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#f3d9a0"/><stop offset=".5" stop-color="#d8aa62"/><stop offset="1" stop-color="#9a6f2e"/>
+  </linearGradient>
+  
+<pattern id="zl" width="34" height="34" patternUnits="userSpaceOnUse">
+  <!-- dark under-stroke gives the interlaced (over/under) look -->
+  <g fill="none" stroke-linejoin="round">
+    <path d="M17.00,2.00 L20.06,9.61 L27.61,6.39 L24.39,13.94 L32.00,17.00 L24.39,20.06 L27.61,27.61 L20.06,24.39 L17.00,32.00 L13.94,24.39 L6.39,27.61 L9.61,20.06 L2.00,17.00 L9.61,13.94 L6.39,6.39 L13.94,9.61Z" stroke="#120c08" stroke-width="3.4"/>
+    <path d="M17.00,2.00 L20.06,9.61 L27.61,6.39 L24.39,13.94 L32.00,17.00 L24.39,20.06 L27.61,27.61 L20.06,24.39 L17.00,32.00 L13.94,24.39 L6.39,27.61 L9.61,20.06 L2.00,17.00 L9.61,13.94 L6.39,6.39 L13.94,9.61Z" stroke="url(#gd)" stroke-width="1.15"/>
+    <circle cx="17.0" cy="17.0" r="3.2" stroke="url(#gd)" stroke-width="1"/>
+    <path d="M0 17.0 L2.0 17.0 M32.0 17.0 L34 17.0 M17.0 0 L17.0 2.0 M17.0 32.0 L17.0 34" stroke="#120c08" stroke-width="3.2"/>
+    <path d="M0 17.0 L2.0 17.0 M32.0 17.0 L34 17.0 M17.0 0 L17.0 2.0 M17.0 32.0 L17.0 34" stroke="url(#gd)" stroke-width="1"/>
+    <path d="M0 0 L9.0 9.0" stroke="url(#gd)" stroke-width=".7" opacity=".55"/>
+  </g>
+  <g fill="url(#gd)" opacity=".9">
+    <path d="M0 -3 L3 0 L0 3 L-3 0Z" transform="translate(0 0)"/>
+    <path d="M0 -3 L3 0 L0 3 L-3 0Z" transform="translate(34 0)"/>
+    <path d="M0 -3 L3 0 L0 3 L-3 0Z" transform="translate(0 34)"/>
+    <path d="M0 -3 L3 0 L0 3 L-3 0Z" transform="translate(34 34)"/>
+  </g>
+</pattern>
+  <radialGradient id="fade" cx="0" cy="0" r="134.64000000000001" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff"/><stop offset=".92" stop-color="#fff" stop-opacity="0"/>
+  </radialGradient>
+  <mask id="m"><path d="M0 0 H129.35999999999999 A129.35999999999999 129.35999999999999 0 0 1 0 129.35999999999999 Z" fill="url(#fade)"/></mask>
+</defs>
+<g mask="url(#m)">
+  <rect width="132" height="132" fill="url(#zl)"/>
+</g>
+<!-- scalloped arc border following the quarter circle -->
+<path d="M129.35999999999999 0 A129.35999999999999 129.35999999999999 0 0 1 0 129.35999999999999" fill="none" stroke="url(#gd)" stroke-width="1.2" opacity=".75"/>
+<path d="M118.8 0 A118.8 118.8 0 0 1 0 118.8" fill="none" stroke="url(#gd)" stroke-width=".6" opacity=".45"/>
+</svg>

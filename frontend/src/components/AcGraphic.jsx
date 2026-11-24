@@ -17,7 +17,7 @@ export default function AcGraphic({ on }) {
       {on && <circle cx="202" cy="34" r="9" fill="#ff2a3d" filter="url(#led-glow)" />}
       <circle cx="202" cy="34" r="5.5" fill={on ? '#ff3b4d' : '#3a2428'} stroke="#7d747a" strokeWidth="1" />
       {/* air flow */}
-      <g className="airflow" fill="none" stroke="#7fd4ae" strokeWidth="2" strokeLinecap="round" opacity={on ? 0.9 : 0}>
+      <g className="airflow" fill="none" stroke="#b4d7bf" strokeWidth="2" strokeLinecap="round" opacity={on ? 0.9 : 0}>
         <path d="M50 98c8 8-8 14 0 22" /><path d="M96 98c8 8-8 14 0 22" /><path d="M142 98c8 8-8 14 0 22" />
       </g>
     </svg>

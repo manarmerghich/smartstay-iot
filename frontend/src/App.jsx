@@ -2,7 +2,6 @@ import { useState } from 'react'
 import './App.css'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
-import RightPanel from './components/RightPanel'
 import Toast from './components/Toast'
 import Icon from './components/Icons'
 import Login from './pages/Login'
@@ -21,7 +20,6 @@ export default function App() {
   const store = useSmartStay()
   const [page, setPage] = useState('dashboard')
   const [selectedId, setSelectedId] = useState('maison1')
-  const [panelOpen, setPanelOpen] = useState(false)
 
   if (!store.session) return <Login onSignIn={store.signIn} onDemo={store.signInDemo} />
 
@@ -33,7 +31,7 @@ export default function App() {
       <Sidebar page={current.id} onNavigate={setPage} />
       <main className="main">
         <Header title={t(current.key)} subtitle={t(`sub.${current.id}`)}
-          onLogout={store.signOut} onMenu={() => setPanelOpen(true)} />
+          onLogout={store.signOut} />
         {store.apiError && <div className="notice error"><Icon name="alert" size={16} /> {store.apiError}</div>}
 
         {current.id === 'dashboard' && <Dashboard apartments={store.apartments} alerts={store.alerts} energy={store.energy} onOpen={openApartment} />}
@@ -51,9 +49,6 @@ export default function App() {
         {current.id === 'logs' && <ActivityLog logs={store.logs} apartments={store.apartments} />}
       </main>
 
-      <RightPanel rules={store.rules} onToggleRule={store.toggleRule} logs={store.logs}
-        apartments={store.apartments} open={panelOpen} onClose={() => setPanelOpen(false)}
-        onNavigate={(p) => { setPage(p); setPanelOpen(false) }} />
       <Toast toast={store.toast} />
     </div>
   )

@@ -4,7 +4,7 @@ import Icon from './Icons'
 import { USE_MOCK } from '../services/api'
 import { useI18n } from '../i18n/useI18n'
 
-export default function Header({ title, subtitle, onLogout, onMenu }) {
+export default function Header({ title, subtitle, onLogout }) {
   const { t } = useI18n()
   return (
     <header className="header">
@@ -21,9 +21,6 @@ export default function Header({ title, subtitle, onLogout, onMenu }) {
         </div>
         <button className="icon-btn" onClick={onLogout} aria-label={t('header.logout')} title={t('header.logout')}>
           <Icon name="logout" size={18} />
-        </button>
-        <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t('header.panel')}>
-          <Icon name="menu" />
         </button>
       </div>
     </header>
