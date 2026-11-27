@@ -67,6 +67,7 @@ CREATE TABLE apartments (
     cleaning    BOOLEAN      NOT NULL DEFAULT FALSE,
     house       INTEGER,                       -- N de maisonN (1 à 6)
     mqtt_prefix VARCHAR(50),                   -- ex : 'smartstay-manar/maison1'
+    tuya_device_id VARCHAR(50),                -- serrure Tuya (maison6 seulement), NULL ailleurs
     PRIMARY KEY (id),
     CONSTRAINT uq_apartments_house  UNIQUE (house),
     CONSTRAINT uq_apartments_prefix UNIQUE (mqtt_prefix),
