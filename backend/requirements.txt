@@ -12,3 +12,6 @@ pydantic==2.13.5
 # Tests
 pytest>=8
 httpx>=0.27
+
+# Tuya (appels HTTP vers le Cloud)
+requests==2.34.2

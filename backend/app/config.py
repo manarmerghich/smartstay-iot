@@ -34,3 +34,10 @@ ENERGY_SPEEDUP = float(os.getenv("ENERGY_SPEEDUP", "1"))   # démo : 60 => 1 min
 ENERGY_BASE_KW = 0.05                                        # veille : frigo, box, etc.
 ENERGY_AC_KW = {"cool": 1.2, "auto": 0.9, "dry": 0.7}        # clim allumée, selon le mode
 ENERGY_WINDOW_OPEN_FACTOR = 1.25                             # clim + fenêtre ouverte : +25 %
+# Serrure Tuya (désactivée par défaut : rien ne change tant que TUYA_ENABLED=false)
+TUYA_ENABLED = _bool("TUYA_ENABLED", "false")
+TUYA_ACCESS_ID = os.getenv("TUYA_ACCESS_ID", "")
+TUYA_ACCESS_SECRET = os.getenv("TUYA_ACCESS_SECRET", "")
+TUYA_BASE_URL = os.getenv("TUYA_BASE_URL", "https://openapi.tuyaeu.com")
+if TUYA_ENABLED and not (TUYA_ACCESS_ID and TUYA_ACCESS_SECRET):
+    raise RuntimeError("TUYA_ENABLED=true mais TUYA_ACCESS_ID / TUYA_ACCESS_SECRET sont manquants")
