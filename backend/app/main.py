@@ -1,4 +1,4 @@
-import asyncio, logging
+import asyncio, logging, time
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from fastapi import FastAPI, Depends, HTTPException
@@ -170,10 +170,11 @@ def create_access_code(rid: int, db: Session = Depends(get_db),
     apt = db.get(Apartment, r.apartment_id)
     if config.TUYA_ENABLED and apt and apt.tuya_device_id:
         try:
-            res = tuya.create_offline_password(apt.tuya_device_id, f"res{rid}",
-                                               int(r.check_in.timestamp()), int(r.check_out.timestamp()))
+            res = tuya.create_offline_password(apt.tuya_device_id, f"res{rid}-{int(time.time())}",
+                                               max(int(r.check_in.timestamp()), int(time.time()) - 3600), int(r.check_out.timestamp()))
             code = str(res["offline_temp_password"])
-        except (tuya.TuyaError, KeyError):
+        except (tuya.TuyaError, KeyError) as e:
+            logging.getLogger("tuya").warning("Tuya a refuse : %s", e)
             logic.journal(db, r.apartment_id, user.email, f"create_access_code res#{rid}", "refused", "Tuya indisponible")
             raise HTTPException(502, "La serrure connectée n'a pas pu créer le code")
     if code is None:
