@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from . import config, logic, schemas, energy
+from . import config, logic, schemas, energy, tuya
 from .db import Base, engine, get_db, now
 from .models import (User, Apartment, DeviceState, Measurement, Reservation,
                      AccessCode, CommandLog, Rule)
@@ -166,10 +166,22 @@ def create_access_code(rid: int, db: Session = Depends(get_db),
                        user: User = Depends(current_user)):
     r = db.get(Reservation, rid)
     if not r or r.status != "confirmed": raise HTTPException(404, "Réservation introuvable ou annulée")
+    code = None
+    apt = db.get(Apartment, r.apartment_id)
+    if config.TUYA_ENABLED and apt and apt.tuya_device_id:
+        try:
+            res = tuya.create_offline_password(apt.tuya_device_id, f"res{rid}",
+                                               int(r.check_in.timestamp()), int(r.check_out.timestamp()))
+            code = str(res["offline_temp_password"])
+        except (tuya.TuyaError, KeyError):
+            logic.journal(db, r.apartment_id, user.email, f"create_access_code res#{rid}", "refused", "Tuya indisponible")
+            raise HTTPException(502, "La serrure connectée n'a pas pu créer le code")
+    if code is None:
+        code = logic.generate_code(db)
     for old in db.scalars(select(AccessCode).where(AccessCode.reservation_id == rid,
                                                    AccessCode.status == "active")):
         old.status = "cancelled"       # un seul code actif par réservation
-    ac = AccessCode(code=logic.generate_code(db), reservation_id=rid, apartment_id=r.apartment_id,
+    ac = AccessCode(code=code, reservation_id=rid, apartment_id=r.apartment_id,
                     valid_from=r.check_in, valid_until=r.check_out)
     db.add(ac); db.commit()
     logic.journal(db, r.apartment_id, user.email, f"create_access_code res#{rid}", "accepted")
