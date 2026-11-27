@@ -17,6 +17,7 @@ class Apartment(Base):
     name: Mapped[str] = mapped_column(String(50))
     city: Mapped[str] = mapped_column(String(100))
     cleaning: Mapped[bool] = mapped_column(Boolean, default=False)
+    tuya_device_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # serrure Tuya (optionnel)
     state: Mapped["DeviceState"] = relationship(back_populates="apartment", uselist=False)
 
 class DeviceState(Base):
